@@ -1,0 +1,127 @@
+---
+title: "netQDA_vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{netQDA_vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{MASS, pROC}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(netQDA)
+```
+
+# Simulate Data
+```{r echo= TRUE}
+seed = 1111
+N.grp = 200
+p = 1000
+p_info = 8
+p.noise = p - p_info
+p.grp = 4
+rho = 0.7
+p1 = 4
+p2 = 2
+rho1 = 0.5
+rho2 = 0.5
+```
+
+```{r echo= TRUE}
+# covariance structure of connected component from start structure
+omega1 <- matrix(0, p.grp, p.grp)
+omega2 <- matrix(0, p.grp, p.grp)
+omega1[1:p1, 1] <- rho1 ; omega1[1, 1:p1 ] <- rho1
+omega2[ 1:p2, 1] <- rho2 ; omega2[1, 1:p2 ] <- rho2
+diag(omega1) <- 1
+diag(omega2) <- 1
+cov1 <- solve(omega1)
+cov2 <- solve(omega2)
+```
+
+
+```{r echo= TRUE}
+set.seed(seed)
+X1.informative.1 = MASS::mvrnorm(n = N.grp,  mu = rep(0, p.grp) , Sigma =cov1 )
+X1.informative.1 = scale( X1.informative.1 , scale = T,center = FALSE)
+X1.informative.2 = MASS::mvrnorm(n = N.grp,  mu = rep(0, p.grp) , Sigma =cov1 )
+X1.informative.2 = scale( X1.informative.2 , scale = T,center = FALSE)
+X1.informative  <- cbind( X1.informative.1,    X1.informative.2)
+X1.informative  <- scale(X1.informative ,
+                           center = T, scale =  apply(X1.informative, 2, sd, na.rm = TRUE))
+```
+
+
+```{r echo= TRUE}
+X2.informative.1 = MASS::mvrnorm(n = N.grp, mu = c(1.5,0,0,0), Sigma = cov2 )
+X2.informative.1 = scale( X2.informative.1 , scale = T,center = FALSE)
+X2.informative.2 = MASS::mvrnorm(n = N.grp, mu = c(1.5,0,0,0), Sigma = cov2 )
+X2.informative.2 = scale( X2.informative.2, scale = T,center = FALSE)
+X2.informative <- cbind( X2.informative.1,    X2.informative.2)
+X =  rbind( X1.informative,  X2.informative)
+```
+
+
+```{r echo= TRUE}
+## Noise part  ----
+X.noise.1 <-  matrix(rnorm(N.grp*(p.noise ), mean =0 , sd = 1), nrow = N.grp,
+                     ncol= p.noise, byrow = T)
+X.noise.2 <-  matrix(rnorm(N.grp*(p.noise ), mean =0 , sd = 1),
+                     nrow = N.grp,
+                     ncol= p.noise, byrow = T)
+X.noise = rbind(X.noise.1 , X.noise.2 )
+X  = cbind(X,  X.noise)
+colnames(X) <- 1:dim(X)[2]
+
+X.train = X[ c(1:100, 201:300), ]
+X.new = X[ c(101:200, 301:400), ]
+```
+
+
+```{r echo= TRUE}
+Y.train = c(rep(1,100), rep(2,100))
+Y.new = c(rep(1,100), rep(2,100))
+```
+
+
+
+# Train Model
+```{r echo= TRUE}
+X = scale(X.train)
+COV.COR <- individual_covcor(X.train, Y.train)
+COV.list <- COV.COR[["COV.list"]]
+COR.list <- COV.COR[["COR.list"]]
+COV.scale.list <- COV.COR[["COV.scale.list"]]
+try <-  netQDAtrain(X = X, y = Y.train,
+                    COV.list=COV.list,
+                    COV.scale.list=COV.scale.list,
+                    COR.list=COR.list,
+                    tau =2 , pair = c(1,2) , alpha = 0.5, nu = 4,  delta =8,
+                    d = 1, nb = 5)
+```
+
+
+```{r echo= TRUE}
+try$screenset
+```
+
+# Classification of New Data
+
+
+```{r echo= TRUE}
+X.new <- scale( X.new ,  center = attr(X, 'scaled:center'),  scale = attr(X, 'scaled:scale'))
+results <- netQDApredict(TrainModel= try, X.new)
+table(results$predClass, Y.new)
+pROC::roc(Y.new, results$predClass)
+```
+
+
+
+

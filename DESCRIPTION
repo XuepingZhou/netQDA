@@ -1,0 +1,21 @@
+Package: netQDA
+Title: functions for local network guided quadratic discriminant analysis (netQDA)
+Version: 0.0.0.9000
+Authors@R: 
+    person("Xueping", "Zhou", , "xuepingzhou616@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Depends: R (>= 2.10)
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+NeedsCompilation: yes
+Packaged: 2022-03-05 17:14:11 UTC; acdsee8602
+Author: Xueping Zhou [aut, cre] (YOUR-ORCID-ID)
+Maintainer: Xueping Zhou <xuepingzhou616@gmail.com>
+Imports: 
+    stats, MASS, pROC
