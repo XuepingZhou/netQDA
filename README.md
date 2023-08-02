@@ -2,6 +2,8 @@
 An R package for Local Network Guided Quadratic Discriminant Analysis 
 
 ```{r setup}
+library(devtools)
+install_github("XuepingZhou/netQDA")
 library(netQDA)
 ```
 
